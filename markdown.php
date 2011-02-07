@@ -1,65 +1,10 @@
 <?php
 
-#
-# Markdown Extra  -  A text-to-HTML conversion tool for web writers
-#
-# PHP Markdown & Extra
-# Copyright (c) 2004-2008 Michel Fortin
-# <http://www.michelf.com/projects/php-markdown/>
-#
-# Original Markdown
-# Copyright (c) 2004-2006 John Gruber
-# <http://daringfireball.net/projects/markdown/>
-#
-
-
-define('MARKDOWN_VERSION', "1.0.1m"); # Sat 21 Jun 2008
-define('MARKDOWNEXTRA_VERSION', "1.2.3"); # Wed 31 Dec 2008
-#
-# Global default settings:
-#
-# Change to ">" for HTML output
-define('MARKDOWN_EMPTY_ELEMENT_SUFFIX', " />");
-
-# Define the width of a tab for code blocks.
-define('MARKDOWN_TAB_WIDTH', 4);
-
-# Optional title attribute for footnote links and backlinks.
-define('MARKDOWN_FN_LINK_TITLE', "");
-define('MARKDOWN_FN_BACKLINK_TITLE', "");
-
-# Optional class attribute for footnote links and backlinks.
-define('MARKDOWN_FN_LINK_CLASS', "");
-define('MARKDOWN_FN_BACKLINK_CLASS', "");
-
-# Enables special handling for links pointing outside of the current domain.
-define('MARKDOWN_EL_ENABLE', true);   # Use this feature at all?
-define('MARKDOWN_EL_LOCAL_DOMAIN', null);   # Leave as null to autodetect
-define('MARKDOWN_EL_NEW_WINDOW', true);   # Open link in a new browser?
-define('MARKDOWN_EL_CSS_CLASS', 'external');   # Leave as null for no class
-# Enables header auto-self-linking.
-define('MARKDOWN_HA_ENABLE', true);   # Use this feature at all?
-define('MARKDOWN_HA_CLASS', 'hidden-selflink');   # Leave as null for no class
-define('MARKDOWN_HA_TEXT', '&larr;');   # The text to use as the link
-#
-# WordPress settings:
-#
-# Change to false to remove Markdown from posts and/or comments.
-define('MARKDOWN_WP_POSTS', true);
-define('MARKDOWN_WP_COMMENTS', true);
-
 function Markdown($text)
 {
-#
-# Initialize the parser and return the result of its transform method.
-#
-    # Setup static parser variable.
     static $parser;
-    if (!isset($parser)) {
+    if (!isset($parser))
         $parser = new ElephantMarkdown;
-    }
-
-    # Transform text using parser.
     return $parser->transform($text);
 }
 
@@ -76,29 +21,139 @@ class ElephantMarkdown
     # Table of hash values for escaped characters:
     protected $escape_chars = '\`*_{}[]()>#+-.!:|';
     protected $escape_chars_re;
-
-    # Change to ">" for HTML output.
-    protected $empty_element_suffix = MARKDOWN_EMPTY_ELEMENT_SUFFIX;
-    protected $tab_width = MARKDOWN_TAB_WIDTH;
+    protected $tab_width = 4;
 
     # Change to `true` to disallow markup or entities.
     protected $no_markup = false;
     protected $no_entities = false;
+    # Internal hashes used during transformation.
+    protected $urls = array();
+    protected $titles = array();
+    protected $html_hashes = array();
 
-    # Predefined urls and titles for reference links and images.
-    protected $predef_urls = array();
-    protected $predef_titles = array();
+    # Status flag to avoid invalid nesting.
+    protected $in_anchor = false;
+    protected $span_gamut = array(
+        #
+        # These are all the transformations that occur *within* block-level
+        # tags like paragraphs, headers, and list items.
+        #
+                # Process character escapes, code spans, and inline HTML
+        # in one shot.
+        "parseSpan" => -30,
+        "doFootnotes" => 5,
+        # Process anchor and image tags. Images must come first,
+        # because ![foo][f] looks like an anchor.
+        "doImages" => 10,
+        "doAnchors" => 20,
+        # Make links out of things like `<http://example.com/>`
+        # Must come after doAnchors, because you can use < and >
+        # delimiters in inline links like [this](<url>).
+        "doAutoLinks" => 30,
+        "encodeAmpsAndAngles" => 40,
+        "doItalicsAndBold" => 50,
+        "doHardBreaks" => 60,
+        "doAbbreviations" => 70,
+    );
+    protected $block_gamut = array(
+        #
+        # These are all the transformations that form block-level
+        # tags like paragraphs, headers, and list items.
+        #
+                "doFencedCodeBlocks" => 5,
+        "doHeaders" => 10,
+        "doTables" => 15,
+        "doHorizontalRules" => 20,
+        "doLists" => 40,
+        "doDefLists" => 45,
+        "doCodeBlocks" => 50,
+        "doBlockQuotes" => 60,
+    );
+    protected $document_gamut = array(
+        "doFencedCodeBlocks" => 5,
+        "stripFootnotes" => 15,
+        "stripLinkDefinitions" => 20,
+        "stripAbbreviations" => 25,
+        "runBasicBlockGamut" => 30,
+        "appendFootnotes" => 50
+    );
+
+    #
+    # Redefining emphasis markers so that emphasis by underscore does not
+    # work in the middle of a word.
+    #
+	protected $em_relist = array(
+        '' => '(?:(?<!\*)\*(?!\*)|(?<![a-zA-Z0-9_])_(?!_))(?=\S)(?![.,:;]\s)',
+        '*' => '(?<=\S)(?<!\*)\*(?!\*)',
+        '_' => '(?<=\S)(?<!_)_(?![a-zA-Z0-9_])',
+    );
+    protected $strong_relist = array(
+        '' => '(?:(?<!\*)\*\*(?!\*)|(?<![a-zA-Z0-9_])__(?!_))(?=\S)(?![.,:;]\s)',
+        '**' => '(?<=\S)(?<!\*)\*\*(?!\*)',
+        '__' => '(?<=\S)(?<!_)__(?![a-zA-Z0-9_])',
+    );
+    protected $em_strong_relist = array(
+        '' => '(?:(?<!\*)\*\*\*(?!\*)|(?<![a-zA-Z0-9_])___(?!_))(?=\S)(?![.,:;]\s)',
+        '***' => '(?<=\S)(?<!\*)\*\*\*(?!\*)',
+        '___' => '(?<=\S)(?<!_)___(?![a-zA-Z0-9_])',
+    );
+
+
+    ### HTML Block Parser ###
+    # Tags that are always treated as block tags:
+    protected $block_tags_re = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|address|form|fieldset|iframe|hr|legend';
+
+    # Tags treated as block tags only if the opening tag is alone on it's line:
+    protected $context_block_tags_re = 'script|noscript|math|ins|del';
+
+    # Tags where markdown="1" default to span mode:
+    protected $contain_span_tags_re = 'p|h[1-6]|li|dd|dt|td|th|legend|address';
+
+    # Tags which must not have their contents modified, no matter where
+    # they appear:
+    protected $clean_tags_re = 'script|math';
+
+    # Tags that do not need to be closed.
+    protected $auto_close_tags_re = 'hr|img';
+
+    # Prefix for footnote ids.
+    protected $fn_id_prefix = "";
+
+    # Optional title attribute for footnote links and backlinks.
+    protected $fn_link_title = "";
+    protected $fn_backlink_title = "";
+
+    # Optional class attribute for footnote links and backlinks.
+    protected $fn_link_class = "";
+    protected $fn_backlink_class = "";
+    protected $el_enable = true;
+    protected $el_local_domain = null;
+    protected $el_new_window = true;
+    protected $el_css_class = "";
+    protected $ha_enable = true;
+    protected $ha_class = "";
+    protected $ha_text = "&larr;";
+
+    # Predefined abbreviations.
+    protected $predef_abbr = array();
+
+
+
+    # Extra variables used during extra transformations.
+    protected $footnotes = array();
+    protected $footnotes_ordered = array();
+    protected $abbr_desciptions = array();
+    protected $abbr_word_re = '';
+
+    # Give the current footnote number.
+    protected $footnote_counter = 1;
+    protected $em_strong_prepared_relist;
+    protected $list_level = 0;
 
     public function __construct()
     {
-        #
-        # Constructor function. Initialize appropriate member variables.
-        #
-        #
-	# Constructor function. Initialize the parser object.
-        #
 
-		if ($this->el_local_domain === null) {
+        if ($this->el_local_domain === null) {
             if (isset($_SERVER['SERVER_NAME'])) {
                 $this->el_local_domain = $_SERVER['SERVER_NAME'];
             } else {
@@ -123,15 +178,6 @@ class ElephantMarkdown
         asort($this->block_gamut);
         asort($this->span_gamut);
     }
-
-    # Internal hashes used during transformation.
-
-    protected $urls = array();
-    protected $titles = array();
-    protected $html_hashes = array();
-
-    # Status flag to avoid invalid nesting.
-    protected $in_anchor = false;
 
     public function transform($text)
     {
@@ -172,15 +218,6 @@ class ElephantMarkdown
 
         return $text . "\n";
     }
-
-    protected $document_gamut = array(
-        "doFencedCodeBlocks" => 5,
-        "stripFootnotes" => 15,
-        "stripLinkDefinitions" => 20,
-        "stripAbbreviations" => 25,
-        "runBasicBlockGamut" => 30,
-        "appendFootnotes" => 50
-    );
 
     public function stripLinkDefinitions($text)
     {
@@ -259,21 +296,6 @@ class ElephantMarkdown
 		return $this->hashPart($text, 'B');
     }
 
-    protected $block_gamut = array(
-        #
-        # These are all the transformations that form block-level
-        # tags like paragraphs, headers, and list items.
-        #
-                "doFencedCodeBlocks" => 5,
-        "doHeaders" => 10,
-        "doTables" => 15,
-        "doHorizontalRules" => 20,
-        "doLists" => 40,
-        "doDefLists" => 45,
-        "doCodeBlocks" => 50,
-        "doBlockQuotes" => 60,
-    );
-
     public function runBlockGamut($text)
     {
         #
@@ -320,32 +342,8 @@ class ElephantMarkdown
 				[ ]*		# Tailing spaces
 				$			# End of line.
 			}mx',
-            "\n" . $this->hashBlock("<hr$this->empty_element_suffix") . "\n",
-            $text);
+            "\n" . $this->hashBlock("<hr />") . "\n", $text);
     }
-
-    protected $span_gamut = array(
-        #
-        # These are all the transformations that occur *within* block-level
-        # tags like paragraphs, headers, and list items.
-        #
-                # Process character escapes, code spans, and inline HTML
-        # in one shot.
-        "parseSpan" => -30,
-        "doFootnotes" => 5,
-        # Process anchor and image tags. Images must come first,
-        # because ![foo][f] looks like an anchor.
-        "doImages" => 10,
-        "doAnchors" => 20,
-        # Make links out of things like `<http://example.com/>`
-        # Must come after doAnchors, because you can use < and >
-        # delimiters in inline links like [this](<url>).
-        "doAutoLinks" => 30,
-        "encodeAmpsAndAngles" => 40,
-        "doItalicsAndBold" => 50,
-        "doHardBreaks" => 60,
-        "doAbbreviations" => 70,
-    );
 
     public function runSpanGamut($text)
     {
@@ -368,7 +366,7 @@ class ElephantMarkdown
 
     public function _doHardBreaks_callback($matches)
     {
-        return $this->hashPart("<br$this->empty_element_suffix\n");
+        return $this->hashPart("<br />\n");
     }
 
     public function doAnchors($text)
@@ -520,7 +518,7 @@ class ElephantMarkdown
                 $title = $this->encodeAttribute($title);
                 $result .= " title=\"$title\"";
             }
-            $result .= $this->empty_element_suffix;
+            $result .= " />";
             $result = $this->hashPart($result);
         } else {
             # If there's no such link ID, leave intact:
@@ -544,7 +542,7 @@ class ElephantMarkdown
             $title = $this->encodeAttribute($title);
             $result .= " title=\"$title\""; # $title already quoted
         }
-        $result .= $this->empty_element_suffix;
+        $result .= " />";
 
         return $this->hashPart($result);
     }
@@ -624,8 +622,6 @@ class ElephantMarkdown
         $result = $this->hashBlock("<$list_type>\n" . $result . "</$list_type>");
         return "\n" . $result . "\n\n";
     }
-
-    protected $list_level = 0;
 
     public function processListItems($list_str, $marker_any_re)
     {
@@ -740,8 +736,6 @@ class ElephantMarkdown
 		$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
         return $this->hashPart("<code>$code</code>");
     }
-
-    protected $em_strong_prepared_relist;
 
     public function prepareItalicsAndBold()
     {
@@ -1175,47 +1169,14 @@ class ElephantMarkdown
         return $this->html_hashes[$matches[0]];
     }
 
-    # Prefix for footnote ids.
-
-    protected $fn_id_prefix = "";
-
-    # Optional title attribute for footnote links and backlinks.
-    protected $fn_link_title = MARKDOWN_FN_LINK_TITLE;
-    protected $fn_backlink_title = MARKDOWN_FN_BACKLINK_TITLE;
-
-    # Optional class attribute for footnote links and backlinks.
-    protected $fn_link_class = MARKDOWN_FN_LINK_CLASS;
-    protected $fn_backlink_class = MARKDOWN_FN_BACKLINK_CLASS;
-    protected $el_enable = MARKDOWN_EL_ENABLE;
-    protected $el_local_domain = MARKDOWN_EL_LOCAL_DOMAIN;
-    protected $el_new_window = MARKDOWN_EL_NEW_WINDOW;
-    protected $el_css_class = MARKDOWN_EL_CSS_CLASS;
-    protected $ha_enable = MARKDOWN_HA_ENABLE;
-    protected $ha_class = MARKDOWN_HA_CLASS;
-    protected $ha_text = MARKDOWN_HA_TEXT;
-
-    # Predefined abbreviations.
-    protected $predef_abbr = array();
-
-
-
-    # Extra variables used during extra transformations.
-    protected $footnotes = array();
-    protected $footnotes_ordered = array();
-    protected $abbr_desciptions = array();
-    protected $abbr_word_re = '';
-
-    # Give the current footnote number.
-    protected $footnote_counter = 1;
-
     public function setup()
     {
         #
         # Setting up Extra-specific variables.
         #
 		# Clear global hashes.
-        $this->urls = $this->predef_urls;
-        $this->titles = $this->predef_titles;
+        $this->urls = array();
+        $this->titles = array();
         $this->html_hashes = array();
 
         $in_anchor = false;
@@ -1248,24 +1209,6 @@ class ElephantMarkdown
         $this->titles = array();
         $this->html_hashes = array();
     }
-
-    ### HTML Block Parser ###
-    # Tags that are always treated as block tags:
-
-    protected $block_tags_re = 'p|div|h[1-6]|blockquote|pre|table|dl|ol|ul|address|form|fieldset|iframe|hr|legend';
-
-    # Tags treated as block tags only if the opening tag is alone on it's line:
-    protected $context_block_tags_re = 'script|noscript|math|ins|del';
-
-    # Tags where markdown="1" default to span mode:
-    protected $contain_span_tags_re = 'p|h[1-6]|li|dd|dt|td|th|legend|address';
-
-    # Tags which must not have their contents modified, no matter where
-    # they appear:
-    protected $clean_tags_re = 'script|math';
-
-    # Tags that do not need to be closed.
-    protected $auto_close_tags_re = 'hr|img';
 
     public function hashHTMLBlocks($text)
     {
@@ -2200,29 +2143,8 @@ class ElephantMarkdown
 
     public function _doFencedCodeBlocks_newlines($matches)
     {
-        return str_repeat("<br$this->empty_element_suffix", strlen($matches[0]));
+        return str_repeat("<br />", strlen($matches[0]));
     }
-
-    #
-    # Redefining emphasis markers so that emphasis by underscore does not
-    # work in the middle of a word.
-
-    #
-	protected $em_relist = array(
-        '' => '(?:(?<!\*)\*(?!\*)|(?<![a-zA-Z0-9_])_(?!_))(?=\S)(?![.,:;]\s)',
-        '*' => '(?<=\S)(?<!\*)\*(?!\*)',
-        '_' => '(?<=\S)(?<!_)_(?![a-zA-Z0-9_])',
-    );
-    protected $strong_relist = array(
-        '' => '(?:(?<!\*)\*\*(?!\*)|(?<![a-zA-Z0-9_])__(?!_))(?=\S)(?![.,:;]\s)',
-        '**' => '(?<=\S)(?<!\*)\*\*(?!\*)',
-        '__' => '(?<=\S)(?<!_)__(?![a-zA-Z0-9_])',
-    );
-    protected $em_strong_relist = array(
-        '' => '(?:(?<!\*)\*\*\*(?!\*)|(?<![a-zA-Z0-9_])___(?!_))(?=\S)(?![.,:;]\s)',
-        '***' => '(?<=\S)(?<!\*)\*\*\*(?!\*)',
-        '___' => '(?<=\S)(?<!_)___(?![a-zA-Z0-9_])',
-    );
 
     public function formParagraphs($text)
     {
@@ -2320,7 +2242,7 @@ class ElephantMarkdown
         if (!empty($this->footnotes_ordered)) {
             $text .= "\n\n";
             $text .= "<div class=\"footnotes\">\n";
-            $text .= "<hr" . MARKDOWN_EMPTY_ELEMENT_SUFFIX . "\n";
+            $text .= "<hr />\n";
             $text .= "<ol>\n\n";
 
             $attr = " rev=\"footnote\"";
