@@ -81,7 +81,7 @@ class ElephantMarkdown {
 	protected $nested_url_parenthesis_re;
 
 	# Table of hash values for escaped characters:
-	protected $escape_chars = '\`*_{}[]()>#+-.!';
+	protected $escape_chars = '\`*_{}[]()>#+-.!:|';
 	protected $escape_chars_re;
 
 	# Change to ">" for HTML output.
@@ -104,9 +104,6 @@ class ElephantMarkdown {
         #
 	# Constructor function. Initialize the parser object.
 	#
-		# Add extra escapable characters before parent constructor
-		# initialize the table.
-		$this->escape_chars .= ':|';
 
 		if ($this->el_local_domain === null) {
 			if (isset($_SERVER['SERVER_NAME'])) {
@@ -115,24 +112,6 @@ class ElephantMarkdown {
                         $this->el_local_domain = 'localhost';
                     }
 		}
-
-		# Insert extra document, block, and span transformations.
-		# Parent constructor will do the sorting.
-		$this->document_gamut += array(
-			"doFencedCodeBlocks" => 5,
-			"stripFootnotes"     => 15,
-			"stripAbbreviations" => 25,
-			"appendFootnotes"    => 50,
-			);
-		$this->block_gamut += array(
-			"doFencedCodeBlocks" => 5,
-			"doTables"           => 15,
-			"doDefLists"         => 45,
-			);
-		$this->span_gamut += array(
-			"doFootnotes"        => 5,
-			"doAbbreviations"    => 70,
-			);
 
 		$this->prepareItalicsAndBold();
 
@@ -205,10 +184,12 @@ class ElephantMarkdown {
 	}
 
 	protected $document_gamut = array(
-		# Strip link definitions, store in hashes.
-		"stripLinkDefinitions" => 20,
-
-		"runBasicBlockGamut"   => 30,
+                    "doFencedCodeBlocks" => 5,
+                    "stripFootnotes"     => 15,
+                    "stripLinkDefinitions" => 20,
+                    "stripAbbreviations" => 25,
+                    "runBasicBlockGamut"   => 30,
+                    "appendFootnotes"    => 50
 		);
 
 
@@ -291,12 +272,14 @@ class ElephantMarkdown {
 	# These are all the transformations that form block-level
 	# tags like paragraphs, headers, and list items.
 	#
-		"doHeaders"         => 10,
-		"doHorizontalRules" => 20,
-
-		"doLists"           => 40,
-		"doCodeBlocks"      => 50,
-		"doBlockQuotes"     => 60,
+                "doFencedCodeBlocks" => 5,
+                "doHeaders"         => 10,
+                "doTables"           => 15,
+                "doHorizontalRules" => 20,
+                "doLists"           => 40,
+                "doDefLists"         => 45,
+                "doCodeBlocks"      => 50,
+                "doBlockQuotes"     => 60,
 		);
 
 	public function runBlockGamut($text) {
@@ -353,23 +336,25 @@ class ElephantMarkdown {
 	# These are all the transformations that occur *within* block-level
 	# tags like paragraphs, headers, and list items.
 	#
-		# Process character escapes, code spans, and inline HTML
-		# in one shot.
-		"parseSpan"           => -30,
+                # Process character escapes, code spans, and inline HTML
+                # in one shot.
+                "parseSpan"           => -30,
+                "doFootnotes"        => 5,
 
-		# Process anchor and image tags. Images must come first,
-		# because ![foo][f] looks like an anchor.
-		"doImages"            =>  10,
-		"doAnchors"           =>  20,
+                # Process anchor and image tags. Images must come first,
+                # because ![foo][f] looks like an anchor.
+                "doImages"            =>  10,
+                "doAnchors"           =>  20,
 
-		# Make links out of things like `<http://example.com/>`
-		# Must come after doAnchors, because you can use < and >
-		# delimiters in inline links like [this](<url>).
-		"doAutoLinks"         =>  30,
-		"encodeAmpsAndAngles" =>  40,
+                # Make links out of things like `<http://example.com/>`
+                # Must come after doAnchors, because you can use < and >
+                # delimiters in inline links like [this](<url>).
+                "doAutoLinks"         =>  30,
+                "encodeAmpsAndAngles" =>  40,
 
-		"doItalicsAndBold"    =>  50,
-		"doHardBreaks"        =>  60,
+                "doItalicsAndBold"    =>  50,
+                "doHardBreaks"        =>  60,
+                "doAbbreviations"    => 70,
 		);
 
 	public function runSpanGamut($text) {
