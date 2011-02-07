@@ -18,7 +18,7 @@ Copyright and License
 ---------------------
 
 Copyright (c) 2011 Alexandre Gomes Gaigalas
-<http://gaigalas.net>
+<http://gaigalas.net/>
 All rights reserved.
 
 Based on php-markdown
