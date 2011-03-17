@@ -422,7 +422,7 @@ class ElephantMarkdown
 			  \)
 			)
 			}xs',
-            array(&$this, '_DoAnchors_inline_callback'), $text);
+            array(&$this, '_doAnchors_inline_callback'), $text);
 
         #
         # Last, handle reference-style shortcuts: [link text]

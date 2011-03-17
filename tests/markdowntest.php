@@ -32,7 +32,7 @@ This is a regular paragraph.
 
 This is another regular paragraph.
 MD
-            ));
+        ));
     }
 
     public function testEscaping()
@@ -58,7 +58,7 @@ This is a paragraph
 
 This is another paragraph
 MD
-            ));
+        ));
     }
 
     public function testLineBreaks()
@@ -74,7 +74,7 @@ HTML
 This is a paragraph  
 with a line break
 MD
-            ));
+        ));
     }
 
     public function testH1Setext()
@@ -85,7 +85,7 @@ MD
 This is an H1
 =============
 MD
-            ));
+        ));
     }
 
     public function testH2Setext()
@@ -96,7 +96,7 @@ MD
 This is an H2
 -------------
 MD
-            ));
+        ));
     }
 
     public function testH1Atx()
@@ -180,7 +180,7 @@ MD
 
 HTML
             ,
-             Markdown(
+            Markdown(
                 <<<MD
 > This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 > consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
@@ -189,7 +189,7 @@ HTML
 > Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
 > id sem consectetuer libero luctus adipiscing.
 MD
-            ));
+        ));
     }
 
     public function testLazyBlockquotes()
@@ -215,7 +215,7 @@ Vestibulum enim wisi, viverra nec, fringilla in, laoreet vitae, risus.
 > Donec sit amet nisl. Aliquam semper ipsum sit amet velit. Suspendisse
 id sem consectetuer libero luctus adipiscing.
 MD
-            ));
+        ));
     }
 
     public function testNestedBlockquotes()
@@ -233,7 +233,7 @@ MD
 
 HTML
             ,
-             Markdown(
+            Markdown(
                 <<<MD
 > This is the first level of quoting.
 >
@@ -241,7 +241,7 @@ HTML
 >
 > Back to the first level.
 MD
-            ));
+        ));
     }
 
     public function testNestedRickBlockquotes()
@@ -274,7 +274,7 @@ HTML
 > 
 >     return shell_exec("echo \$input | \$markdown_script");
 MD
-            ));
+        ));
     }
 
     public function testSimpleLists()
@@ -293,7 +293,7 @@ HTML
 - Blue
 - Green
 MD
-            ));
+        ));
     }
 
     public function testSimpleListsPlusSign()
@@ -312,7 +312,7 @@ HTML
 + Bar
 + Baz
 MD
-            ));
+        ));
     }
 
     public function testSimpleListsAsterisk()
@@ -331,7 +331,7 @@ HTML
 * Bar
 * Baz
 MD
-            ));
+        ));
     }
 
     public function testSimpleListsIndented()
@@ -357,7 +357,7 @@ HTML
 *  Bat Man, bar something
    lorem ipsum etc
 MD
-            ));
+        ));
     }
 
     public function testSimpleListsParagraph()
@@ -379,7 +379,7 @@ HTML
 
 * Baz
 MD
-            ));
+        ));
     }
 
     public function testBlocksInsideLists()
@@ -409,7 +409,7 @@ HTML
 
     >Cool.
 MD
-            ));
+        ));
     }
 
     public function testListsMultipleParagraph()
@@ -443,7 +443,7 @@ HTML
     
     Second Baz
 MD
-            ));
+        ));
     }
 
     public function testOrderedLists()
@@ -463,7 +463,7 @@ HTML
 2. Bar
 3. Baz
 MD
-            ));
+        ));
     }
 
     public function testListEscapedDot()
@@ -479,7 +479,7 @@ HTML
 1990\. Nice Year
 1991\. Terrible Year.
 MD
-            ));
+        ));
     }
 
     public function testOrderedListsCustom()
@@ -499,7 +499,7 @@ HTML
 8. Bar
 5. Baz
 MD
-            ));
+        ));
     }
 
     public function testNestedLists()
@@ -526,7 +526,7 @@ HTML
 2. Bar
 3. Baz
 MD
-            ));
+        ));
     }
 
     public function testCodeBlock()
@@ -545,7 +545,7 @@ HTML
     Geeky <strong>HTML-escaped</strong>
     Code
 MD
-            ));
+        ));
     }
 
     public function testHorizontal()
@@ -556,12 +556,12 @@ MD
 HTML
             , Markdown(
                 <<<MD
---------------
+***********
 MD
-            ));
+        ));
     }
 
-    public function testSimpleLinks()
+    public function testHorizontal2()
     {
         $this->assertEquals(<<<HTML
 <hr />
@@ -569,9 +569,84 @@ MD
 HTML
             , Markdown(
                 <<<MD
---------------
+- - - -
 MD
-            ));
+        ));
+    }
+
+    public function testHorizontal3()
+    {
+        $this->assertEquals(<<<HTML
+<hr />
+
+HTML
+            , Markdown(
+                <<<MD
+* * * * 
+MD
+        ));
+    }
+
+    public function testSimpleLinks()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Title" target="_blank">an example</a> inline link.</p>
+
+<p><a href="http://example.net/" target="_blank">This link</a> has no title attribute.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example](http://example.com/ "Title") inline link.
+
+[This link](http://example.net/) has no title attribute.
+MD
+        ));
+    }
+
+    public function testLinksRelative()
+    {
+        $this->assertEquals(<<<HTML
+<p>See my <a href="/about/">About</a> page for details.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+See my [About](/about/) page for details.
+MD
+        ));
+    }
+
+
+
+    public function testReferences()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example][id] reference-style link.
+
+[id]: http://example.com/  "Optional Title Here"
+MD
+        ));
+    }
+
+    public function testReferencesSpaced()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example] [id] reference-style link.
+
+[id]: http://example.com/  "Optional Title Here"
+MD
+        ));
     }
 
 }
