@@ -649,4 +649,123 @@ MD
         ));
     }
 
+
+    public function testReferencesSpacedSingleQuotes()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example] [id] reference-style link.
+
+[id]: http://example.com/  'Optional Title Here'
+MD
+        ));
+    }
+
+
+    public function testReferencesSpacedParenthesis()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example] [id] reference-style link.
+
+[id]: http://example.com/  (Optional Title Here)
+MD
+        ));
+    }
+
+    public function testReferencesLines()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/longish/path/to/resource/here" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example] [id] reference-style link.
+    
+[id]: http://example.com/longish/path/to/resource/here
+    "Optional Title Here"
+MD
+        ));
+    }
+
+
+
+    public function testReferencesCaseSensitivity()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example] [ID] reference-style link.
+
+[id]: http://example.com/  (Optional Title Here)
+MD
+        ));
+    }
+
+    public function testReferencesImplicit()
+    {
+        $this->assertEquals(<<<HTML
+<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+This is [an example][] reference-style link.
+
+[an example]: http://example.com/  (Optional Title Here)
+MD
+        ));
+    }
+    public function testReferencesFullSample()
+    {
+        $this->assertEquals(<<<HTML
+<p>I get 10 times more traffic from <a href="http://google.com/" title="Google" target="_blank">Google</a> than from
+<a href="http://search.yahoo.com/" title="Yahoo Search" target="_blank">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search" target="_blank">MSN</a>.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+I get 10 times more traffic from [Google] [1] than from
+[Yahoo] [2] or [MSN] [3].
+
+  [1]: http://google.com/        "Google"
+  [2]: http://search.yahoo.com/  "Yahoo Search"
+  [3]: http://search.msn.com/    "MSN Search"
+MD
+        ));
+    }
+
+    public function testReferencesFullSampleImplicit()
+    {
+        $this->assertEquals(<<<HTML
+<p>I get 10 times more traffic from <a href="http://google.com/" title="Google" target="_blank">Google</a> than from
+<a href="http://search.yahoo.com/" title="Yahoo Search" target="_blank">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search" target="_blank">MSN</a>.</p>
+
+HTML
+            , Markdown(
+                <<<MD
+I get 10 times more traffic from [Google][] than from
+[Yahoo][] or [MSN][].
+
+  [google]: http://google.com/        "Google"
+  [yahoo]:  http://search.yahoo.com/  "Yahoo Search"
+  [msn]:    http://search.msn.com/    "MSN Search"
+MD
+        ));
+    }
+
+
+
 }

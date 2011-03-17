@@ -239,9 +239,9 @@ class ElephantMarkdown
 							  [ ]*
 							(?:
 								(?<=\s)			# lookbehind for whitespace
-								["(]
+								["\'(]
 								(.*?)			# title = $3
-								[")]
+								[")\']
 								[ ]*
 							)?	# title is optional
 							(?:\n+|\Z)
