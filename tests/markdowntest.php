@@ -617,8 +617,6 @@ MD
         ));
     }
 
-
-
     public function testReferences()
     {
         $this->assertEquals(<<<HTML
@@ -649,7 +647,6 @@ MD
         ));
     }
 
-
     public function testReferencesSpacedSingleQuotes()
     {
         $this->assertEquals(<<<HTML
@@ -664,7 +661,6 @@ This is [an example] [id] reference-style link.
 MD
         ));
     }
-
 
     public function testReferencesSpacedParenthesis()
     {
@@ -697,8 +693,6 @@ MD
         ));
     }
 
-
-
     public function testReferencesCaseSensitivity()
     {
         $this->assertEquals(<<<HTML
@@ -728,6 +722,7 @@ This is [an example][] reference-style link.
 MD
         ));
     }
+
     public function testReferencesFullSample()
     {
         $this->assertEquals(<<<HTML
@@ -766,6 +761,108 @@ MD
         ));
     }
 
+    public function testEmphasisSingleAsterisks()
+    {
+        $this->assertEquals(<<<HTML
+<p><em>single asteriscs</em></p>
 
+HTML
+            , Markdown(
+                <<<MD
+*single asteriscs*
+MD
+        ));
+    }
+
+    public function testEmphasisSingleunderscores()
+    {
+        $this->assertEquals(<<<HTML
+<p><em>single underscores</em></p>
+
+HTML
+            , Markdown(
+                <<<MD
+_single underscores_
+MD
+        ));
+    }
+
+    public function testEmphasisDoubleAsterisks()
+    {
+        $this->assertEquals(<<<HTML
+<p><strong>double asteriscs</strong></p>
+
+HTML
+            , Markdown(
+                <<<MD
+**double asteriscs**
+MD
+        ));
+    }
+
+    public function testEmphasisDoubleunderscores()
+    {
+        $this->assertEquals(<<<HTML
+<p><strong>double underscores</strong></p>
+
+HTML
+            , Markdown(
+                <<<MD
+__double underscores__
+MD
+        ));
+    }
+
+    public function testEmphasisSingleAsterisksWord()
+    {
+        $this->assertEquals(<<<HTML
+<p>un<em>frigging</em>believable</p>
+
+HTML
+            , Markdown(
+                <<<MD
+un*frigging*believable
+MD
+        ));
+    }
+
+    public function testEmphasisSingleunderscoresWord()
+    {
+        $this->assertEquals(<<<HTML
+<p>un_frigging_believable</p>
+
+HTML
+            , Markdown(
+                <<<MD
+un_frigging_believable
+MD
+));
+    }
+
+    public function testEmphasisDoubleAsterisksWord()
+    {
+        $this->assertEquals(<<<HTML
+<p>un<strong>frigging</strong>believable</p>
+
+HTML
+            , Markdown(
+                <<<MD
+un**frigging**believable
+MD
+        ));
+    }
+
+    public function testEmphasisDoubleunderscoresWord()
+    {
+        $this->assertEquals(<<<HTML
+<p>un__frigging__believable</p>
+
+HTML
+            , Markdown(
+                <<<MD
+un__frigging__believable
+MD
+));
+    }
 
 }
