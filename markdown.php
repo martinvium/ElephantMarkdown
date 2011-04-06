@@ -1,14 +1,6 @@
 <?php
 
-function Markdown($text)
-{
-    static $parser;
-    if (!isset($parser))
-        $parser = new ElephantMarkdown;
-    return $parser->transform($text);
-}
-
-class ElephantMarkdown
+class Markdown
 {
     const NESTED_BRACKETS_DEPHT = 6;
     const NESTED_URL_PARENTHESIS_DEPHT = 4;
@@ -46,6 +38,14 @@ class ElephantMarkdown
     protected $abbrWordsRegex = '';
     protected $footnoteCounter = 1;
     protected $listLevel = 0;
+
+    public static function MD($text)
+    {
+        static $parser;
+        if (!isset($parser))
+            $parser = new Markdown;
+        return $parser->transform($text);
+    }
 
     public function transform($text)
     {
