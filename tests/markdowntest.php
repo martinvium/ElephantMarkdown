@@ -590,9 +590,9 @@ MD
     public function testSimpleLinks()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Title" target="_blank">an example</a> inline link.</p>
+<p>This is <a href="http://example.com/" title="Title">an example</a> inline link.</p>
 
-<p><a href="http://example.net/" target="_blank">This link</a> has no title attribute.</p>
+<p><a href="http://example.net/">This link</a> has no title attribute.</p>
 
 HTML
             , Markdown(
@@ -622,7 +622,7 @@ MD
     public function testReferences()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -637,7 +637,7 @@ MD
     public function testReferencesSpaced()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -653,7 +653,7 @@ MD
     public function testReferencesSpacedSingleQuotes()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -669,7 +669,7 @@ MD
     public function testReferencesSpacedParenthesis()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -684,7 +684,7 @@ MD
     public function testReferencesLines()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/longish/path/to/resource/here" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/longish/path/to/resource/here" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -702,7 +702,7 @@ MD
     public function testReferencesCaseSensitivity()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -717,7 +717,7 @@ MD
     public function testReferencesImplicit()
     {
         $this->assertEquals(<<<HTML
-<p>This is <a href="http://example.com/" title="Optional Title Here" target="_blank">an example</a> reference-style link.</p>
+<p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
             , Markdown(
@@ -731,8 +731,8 @@ MD
     public function testReferencesFullSample()
     {
         $this->assertEquals(<<<HTML
-<p>I get 10 times more traffic from <a href="http://google.com/" title="Google" target="_blank">Google</a> than from
-<a href="http://search.yahoo.com/" title="Yahoo Search" target="_blank">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search" target="_blank">MSN</a>.</p>
+<p>I get 10 times more traffic from <a href="http://google.com/" title="Google">Google</a> than from
+<a href="http://search.yahoo.com/" title="Yahoo Search">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search">MSN</a>.</p>
 
 HTML
             , Markdown(
@@ -750,8 +750,8 @@ MD
     public function testReferencesFullSampleImplicit()
     {
         $this->assertEquals(<<<HTML
-<p>I get 10 times more traffic from <a href="http://google.com/" title="Google" target="_blank">Google</a> than from
-<a href="http://search.yahoo.com/" title="Yahoo Search" target="_blank">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search" target="_blank">MSN</a>.</p>
+<p>I get 10 times more traffic from <a href="http://google.com/" title="Google">Google</a> than from
+<a href="http://search.yahoo.com/" title="Yahoo Search">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search">MSN</a>.</p>
 
 HTML
             , Markdown(
