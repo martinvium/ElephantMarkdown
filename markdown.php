@@ -150,36 +150,43 @@ class ElephantMarkdown
         # hash references.
         #
         $less_than_tab = static::TAB_WIDTH - 1;
-        $titles = &$this->titles;
-        $urls = &$this->urls;
 
         # Link defs are in the form: ^[id]: url "optional title"
-        return preg_replace_callback(
-            '{
-                    ^[ ]{0,' . $less_than_tab . '}\[(.+)\][ ]?:	# id = $1
-                      [ ]*
-                      \n?				# maybe *one* newline
-                      [ ]*
-                    <?(\S+?)>?			# url = $2
-                      [ ]*
-                      \n?				# maybe one newline
-                      [ ]*
-                    (?:
-                        (?<=\s)			# lookbehind for whitespace
-                        ["\'(]
-                        (.*?)			# title = $3
-                        [")\']
-                        [ ]*
-                    )?	# title is optional
-                    (?:\n+|\Z)
-                }xm',
-            function($matches) use (&$titles, &$urls) {
-                $link_id = strtolower($matches[1]);
-                $urls[$link_id] = $matches[2];
-                $titles[$link_id] = & $matches[3];
-            },
-            $text
-        );
+        $text = preg_replace_callback('{
+							^[ ]{0,' . $less_than_tab . '}\[(.+)\][ ]?:	# id = $1
+							  [ ]*
+							  \n?				# maybe *one* newline
+							  [ ]*
+							<?(\S+?)>?			# url = $2
+							  [ ]*
+							  \n?				# maybe one newline
+							  [ ]*
+							(?:
+								(?<=\s)			# lookbehind for whitespace
+								["\'(]
+								(.*?)			# title = $3
+								[")\']
+								[ ]*
+							)?	# title is optional
+							(?:\n+|\Z)
+			}xm',
+                array(&$this, '_stripLinkDefinitions_callback'), $text);
+        return $text;
+    }
+
+    public function _stripLinkDefinitions_callback($matches)
+    {
+        $link_id = strtolower($matches[1]);
+        $this->urls[$link_id] = $matches[2];
+        $this->titles[$link_id] = & $matches[3];
+        return ''; # String that will replace the block
+    }
+
+    public function _hashHTMLBlocks_callback($matches)
+    {
+        $text = $matches[1];
+        $key = $this->hashBlock($text);
+        return "\n\n$key\n\n";
     }
 
     public function hashPart($text, $boundary = 'X')
