@@ -12,7 +12,7 @@ class ElephantMarkdown
 {
     const NESTED_BRACKETS_DEPHT = 6;
     const NESTED_URL_PARENTHESIS_DEPHT = 4;
-    const ESCAPE_CHARS = '\`*_{}[]()>#+-.!:|';
+    const ESCAPE_CHARS = '[\\`\*_\{\}\[\]\(\)\>#\+\-\.\!\:\|]';
     const TAB_WIDTH = 4;
     const NO_MARKUP = false;
     const NO_ENTITIES = false;
@@ -22,138 +22,64 @@ class ElephantMarkdown
     const CLEAN_TAGS_REGEX = 'script|math';
     const AUTO_CLOSE_TAGS_REGEX = 'hr|img';
     const HEADER_SELFLINK_TEXT= "&larr;";
+    const NESTED_BRACKETS_REGEX = '(?>[^\[\]]+|\[(?>[^\[\]]+|\[(?>[^\[\]]+|\[(?>[^\[\]]+|\[(?>[^\[\]]+|\[(?>[^\[\]]+|\[\])*\])*\])*\])*\])*\])*';
+    const NESTED_URL_PARENTHESIS_REGEX = '(?>[^()\s]+|\((?>[^()\s]+|\((?>[^()\s]+|\((?>[^()\s]+|\((?>\)))*(?>\)))*(?>\)))*(?>\)))*';
 
-    protected $nestedBracketsRegex;
-    protected $nestedUrlParenthesisRegex;
-    protected $escapeCharsRegex;
+    protected static $emStrongPreparedRegexList = array(
+        '' => '{((?:(?<!\\*)\\*\\*\\*(?!\\*)|(?<![a-zA-Z0-9_])___(?!_))(?=\\S)(?![.,:;]\\s)|(?:(?<!\\*)\\*(?!\\*)|(?<![a-zA-Z0-9_])_(?!_))(?=\\S)(?![.,:;]\\s)|(?:(?<!\\*)\\*\\*(?!\\*)|(?<![a-zA-Z0-9_])__(?!_))(?=\\S)(?![.,:;]\\s))}',
+        '**' => '{((?:(?<!\\*)\\*(?!\\*)|(?<![a-zA-Z0-9_])_(?!_))(?=\\S)(?![.,:;]\\s)|(?<=\\S)(?<!\\*)\\*\\*(?!\\*))}',
+        '__' => '{((?:(?<!\\*)\\*(?!\\*)|(?<![a-zA-Z0-9_])_(?!_))(?=\\S)(?![.,:;]\\s)|(?<=\\S)(?<!_)__(?![a-zA-Z0-9_]))}',
+        '*' => '{((?<=\\S)(?<!\\*)\\*(?!\\*)|(?:(?<!\\*)\\*\\*(?!\\*)|(?<![a-zA-Z0-9_])__(?!_))(?=\\S)(?![.,:;]\\s))}',
+        '***' => '{((?<=\\S)(?<!\\*)\\*\\*\\*(?!\\*)|(?<=\\S)(?<!\\*)\\*(?!\\*)|(?<=\\S)(?<!\\*)\\*\\*(?!\\*))}',
+        '*__' => '{((?<=\\S)(?<!\\*)\\*(?!\\*)|(?<=\\S)(?<!_)__(?![a-zA-Z0-9_]))}',
+        '_' => '{((?<=\\S)(?<!_)_(?![a-zA-Z0-9_])|(?:(?<!\\*)\\*\\*(?!\\*)|(?<![a-zA-Z0-9_])__(?!_))(?=\\S)(?![.,:;]\\s))}',
+        '_**' => '{((?<=\\S)(?<!_)_(?![a-zA-Z0-9_])|(?<=\\S)(?<!\\*)\\*\\*(?!\\*))}',
+        '___' => '{((?<=\\S)(?<!_)___(?![a-zA-Z0-9_])|(?<=\\S)(?<!_)_(?![a-zA-Z0-9_])|(?<=\\S)(?<!_)__(?![a-zA-Z0-9_]))}',
+    );
     protected $urls = array();
     protected $titles = array();
     protected $htmlHashes = array();
     protected $inAnchor = false;
-    protected $inlineGamut = array(
-        "parseSpan" => -30,
-        "doFootnotes" => 5,
-        "doImages" => 10,
-        "doAnchors" => 20,
-        "doAutoLinks" => 30,
-        "encodeAmpsAndAngles" => 40,
-        "doItalicsAndBold" => 50,
-        "doHardBreaks" => 60,
-        "doAbbreviations" => 70,
-    );
-    protected $blockGamut = array(
-        "doFencedCodeBlocks" => 5,
-        "doHeaders" => 10,
-        "doTables" => 15,
-        "doHorizontalRules" => 20,
-        "doLists" => 40,
-        "doDefLists" => 45,
-        "doCodeBlocks" => 50,
-        "doBlockQuotes" => 60,
-    );
-    protected $documentGamut = array(
-        "doFencedCodeBlocks" => 5,
-        "stripFootnotes" => 15,
-        "stripLinkDefinitions" => 20,
-        "stripAbbreviations" => 25,
-        "runBasicBlockGamut" => 30,
-        "appendFootnotes" => 50
-    );
-    protected $emRegexList = array(
-        '' => '(?:(?<!\*)\*(?!\*)|(?<![a-zA-Z0-9_])_(?!_))(?=\S)(?![.,:;]\s)',
-        '*' => '(?<=\S)(?<!\*)\*(?!\*)',
-        '_' => '(?<=\S)(?<!_)_(?![a-zA-Z0-9_])',
-    );
-    protected $strongRegexList = array(
-        '' => '(?:(?<!\*)\*\*(?!\*)|(?<![a-zA-Z0-9_])__(?!_))(?=\S)(?![.,:;]\s)',
-        '**' => '(?<=\S)(?<!\*)\*\*(?!\*)',
-        '__' => '(?<=\S)(?<!_)__(?![a-zA-Z0-9_])',
-    );
-    protected $emStrongRegexList = array(
-        '' => '(?:(?<!\*)\*\*\*(?!\*)|(?<![a-zA-Z0-9_])___(?!_))(?=\S)(?![.,:;]\s)',
-        '***' => '(?<=\S)(?<!\*)\*\*\*(?!\*)',
-        '___' => '(?<=\S)(?<!_)___(?![a-zA-Z0-9_])',
-    );
     protected $footnotes = array();
     protected $orderedFootnotes = array();
     protected $abbrDescriptions = array();
     protected $abbrWordsRegex = '';
     protected $footnoteCounter = 1;
-    protected $emStrongPreparedRegexList = array();
     protected $listLevel = 0;
-
-    public function __construct()
-    {
-
-        $this->prepareItalicsAndBold();
-
-        $this->nestedBracketsRegex =
-            str_repeat('(?>[^\[\]]+|\[', static::NESTED_BRACKETS_DEPHT) .
-            str_repeat('\])*', static::NESTED_BRACKETS_DEPHT);
-
-        $this->nestedUrlParenthesisRegex =
-            str_repeat('(?>[^()\s]+|\(', static::NESTED_URL_PARENTHESIS_DEPHT) .
-            str_repeat('(?>\)))*', static::NESTED_URL_PARENTHESIS_DEPHT);
-
-        $this->escapeCharsRegex = '[' . preg_quote(static::ESCAPE_CHARS) . ']';
-
-        # Sort document, block, and span gamut in ascendent priority order.
-        asort($this->documentGamut);
-        asort($this->blockGamut);
-        asort($this->inlineGamut);
-    }
 
     public function transform($text)
     {
-        #
-        # Main function. Performs some preprocessing on the input text
-        # and pass it through the document gamut.
-        #
-        $this->setup();
-
-        # Remove UTF-8 BOM and marker character in input, if present.
+        //Remove UTF-8 BOM and marker character in input, if present
         $text = preg_replace('{^\xEF\xBB\xBF|\x1A}', '', $text);
-
-        # Standardize line endings:
-        #   DOS to Unix and Mac to Unix
+        //Standardize line endings
         $text = preg_replace('{\r\n?}', "\n", $text);
-
-        # Make sure $text ends with a couple of newlines:
         $text .= "\n\n";
-
-        # Convert all tabs to spaces.
         $text = $this->detab($text);
-
-        # Turn block-level HTML blocks into hash entries
+        //Turn block-level HTML blocks into hash entries
         $text = $this->hashHTMLBlocks($text);
-
-        # Strip any lines consisting only of spaces and tabs.
-        # This makes subsequent regexen easier to write, because we can
-        # match consecutive blank lines with /\n+/ instead of something
-        # contorted like /[ ]*\n+/ .
+        //Strip lines with spaces only
         $text = preg_replace('/^[ ]+$/m', '', $text);
-
-        # Run document gamut methods.
-        foreach ($this->documentGamut as $method => $priority) {
-            $text = $this->$method($text);
-        }
-
-        $this->teardown();
-
+        $text = $this->runDocumentGamut($text);
+        $this->cleanUp();
         return $text . "\n";
+    }
+
+    public function runDocumentGamut($text)
+    {
+        $text = $this->doFencedCodeBlocks($text);
+        $text = $this->stripFootnotes($text);
+        $text = $this->stripLinkDefinitions($text);
+        $text = $this->stripAbbreviations($text);
+        $text = $this->runBasicBlockGamut($text);
+        $text = $this->appendFootnotes($text);
+        return $text;
     }
 
     public function stripLinkDefinitions($text)
     {
-        #
-        # Strips link definitions from text, stores the URLs and titles in
-        # hash references.
-        #
-        $less_than_tab = static::TAB_WIDTH - 1;
-
-        # Link defs are in the form: ^[id]: url "optional title"
+        // Link defs are in the form: ^[id]: url "optional title"
         $text = preg_replace_callback('{
-							^[ ]{0,' . $less_than_tab . '}\[(.+)\][ ]?:	# id = $1
+							^[ ]{0,' . (static::TAB_WIDTH - 1) . '}\[(.+)\][ ]?:	# id = $1
 							  [ ]*
 							  \n?				# maybe *one* newline
 							  [ ]*
@@ -179,7 +105,7 @@ class ElephantMarkdown
         $link_id = strtolower($matches[1]);
         $this->urls[$link_id] = $matches[2];
         $this->titles[$link_id] = & $matches[3];
-        return ''; # String that will replace the block
+        return ''; /// String that will replace the block
     }
 
     public function _hashHTMLBlocks_callback($matches)
@@ -237,18 +163,16 @@ class ElephantMarkdown
 
     public function runBasicBlockGamut($text)
     {
-        #
-        # Run block gamut tranformations, without hashing HTML blocks. This is
-        # useful when HTML blocks are known to be already hashed, like in the first
-        # whole-document pass.
-        #
-        foreach ($this->blockGamut as $method => $priority) {
-            $text = $this->$method($text);
-        }
 
-        # Finally form paragraph and restore hashed blocks.
+        $text = $this->doFencedCodeBlocks($text);
+        $text = $this->doHeaders($text);
+        $text = $this->doTables($text);
+        $text = $this->doHorizontalRules($text);
+        $text = $this->doLists($text);
+        $text = $this->doDefLists($text);
+        $text = $this->doCodeBlocks($text);
+        $text = $this->doBlockQuotes($text);
         $text = $this->formParagraphs($text);
-
         return $text;
     }
 
@@ -271,13 +195,16 @@ class ElephantMarkdown
 
     public function runSpanGamut($text)
     {
-        #
-        # Run span gamut tranformations.
-        #
-        foreach ($this->inlineGamut as $method => $priority) {
-            $text = $this->$method($text);
-        }
 
+        $text = $this->parseSpan($text);
+        $text = $this->doFootnotes($text);
+        $text = $this->doImages($text);
+        $text = $this->doAnchors($text);
+        $text = $this->doAutoLinks($text);
+        $text = $this->encodeAmpsAndAngles($text);
+        $text = $this->doItalicsAndBold($text);
+        $text = $this->doHardBreaks($text);
+        $text = $this->doAbbreviations($text);
         return $text;
     }
 
@@ -308,7 +235,7 @@ class ElephantMarkdown
         $text = preg_replace_callback('{
 			(					# wrap whole match in $1
 			  \[
-				(' . $this->nestedBracketsRegex . ')	# link text = $2
+				(' . static::NESTED_BRACKETS_REGEX . ')	# link text = $2
 			  \]
 
 			  [ ]?				# one optional space
@@ -327,14 +254,14 @@ class ElephantMarkdown
         $text = preg_replace_callback('{
 			(				# wrap whole match in $1
 			  \[
-				(' . $this->nestedBracketsRegex . ')	# link text = $2
+				(' . static::NESTED_BRACKETS_REGEX . ')	# link text = $2
 			  \]
 			  \(			# literal paren
 				[ ]*
 				(?:
 					<(\S*)>	# href = $3
 				|
-					(' . $this->nestedUrlParenthesisRegex . ')	# href = $4
+					(' . static::NESTED_URL_PARENTHESIS_REGEX . ')	# href = $4
 				)
 				[ ]*
 				(			# $5
@@ -348,19 +275,6 @@ class ElephantMarkdown
 			}xs',
                 array(&$this, '_doAnchors_inline_callback'), $text);
 
-        #
-        # Last, handle reference-style shortcuts: [link text]
-        # These must come last in case you've also got [link test][1]
-        # or [link test](/foo)
-        #
-//		$text = preg_replace_callback('{
-//			(					# wrap whole match in $1
-//			  \[
-//				([^\[\]]+)		# link text = $2; can\'t contain [ or ]
-//			  \]
-//			)
-//			}xs',
-//			array(&$this, '_doAnchors_reference_callback'), $text);
 
         $this->inAnchor = false;
         return $text;
@@ -377,7 +291,7 @@ class ElephantMarkdown
         $text = preg_replace_callback('{
 			(				# wrap whole match in $1
 			  !\[
-				(' . $this->nestedBracketsRegex . ')		# alt text = $2
+				(' . static::NESTED_BRACKETS_REGEX . ')		# alt text = $2
 			  \]
 
 			  [ ]?				# one optional space
@@ -398,7 +312,7 @@ class ElephantMarkdown
         $text = preg_replace_callback('{
 			(				# wrap whole match in $1
 			  !\[
-				(' . $this->nestedBracketsRegex . ')		# alt text = $2
+				(' . static::NESTED_BRACKETS_REGEX . ')		# alt text = $2
 			  \]
 			  \s?			# One optional whitespace character
 			  \(			# literal paren
@@ -406,7 +320,7 @@ class ElephantMarkdown
 				(?:
 					<(\S*)>	# src url = $3
 				|
-					(' . $this->nestedUrlParenthesisRegex . ')	# src url = $4
+					(' . static::NESTED_URL_PARENTHESIS_REGEX . ')	# src url = $4
 				)
 				[ ]*
 				(			# $5
@@ -661,29 +575,6 @@ class ElephantMarkdown
         return $this->hashPart("<code>$code</code>");
     }
 
-    public function prepareItalicsAndBold()
-    {
-        #
-        # Prepare regular expressions for seraching emphasis tokens in any
-        # context.
-        #
-        foreach ($this->emRegexList as $em => $em_re) {
-            foreach ($this->strongRegexList as $strong => $strong_re) {
-                # Construct list of allowed token expressions.
-                $token_relist = array();
-                if (isset($this->emStrongRegexList["$em$strong"])) {
-                    $token_relist[] = $this->emStrongRegexList["$em$strong"];
-                }
-                $token_relist[] = $em_re;
-                $token_relist[] = $strong_re;
-
-                # Construct master expression from list.
-                $token_re = '{(' . implode('|', $token_relist) . ')}';
-                $this->emStrongPreparedRegexList["$em$strong"] = $token_re;
-            }
-        }
-    }
-
     public function doItalicsAndBold($text)
     {
         $token_stack = array('');
@@ -697,7 +588,7 @@ class ElephantMarkdown
             # Get prepared regular expression for seraching emphasis tokens
             # in current context.
             #
-            $token_re = $this->emStrongPreparedRegexList["$em$strong"];
+            $token_re = static::$emStrongPreparedRegexList["$em$strong"];
 
             #
             # Each loop iteration seach for the next emphasis token.
@@ -969,7 +860,7 @@ class ElephantMarkdown
 
         $span_re = '{
 				(
-					\\\\' . $this->escapeCharsRegex . '
+					\\\\' . static::ESCAPE_CHARS . '
 				|
 					(?<![`\\\\])
 					`+						# code span marker
@@ -1093,7 +984,7 @@ class ElephantMarkdown
         return $this->htmlHashes[$matches[0]];
     }
 
-    public function setup()
+    public function cleanUp()
     {
         #
         # Setting up Extra-specific variables.
@@ -1110,21 +1001,6 @@ class ElephantMarkdown
         $this->abbrDescriptions = array();
         $this->abbrWordsRegex = '';
         $this->footnoteCounter = 1;
-    }
-
-    public function teardown()
-    {
-        #
-        # Clearing Extra-specific variables.
-        #
-        $this->footnotes = array();
-        $this->orderedFootnotes = array();
-        $this->abbrDescriptions = array();
-        $this->abbrWordsRegex = '';
-
-        $this->urls = array();
-        $this->titles = array();
-        $this->htmlHashes = array();
     }
 
     public function hashHTMLBlocks($text)
