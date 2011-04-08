@@ -2,7 +2,7 @@
 
 class Markdown
 {
-    const NESTED_BRACKETS_DEPHT = 6;
+    const NESTED_BRACKETS_DEPTH = 6;
     const NESTED_URL_PARENTHESIS_DEPHT = 4;
     const ESCAPE_CHARS = '[\\`\*_\{\}\[\]\(\)\>#\+\-\.\!\:\|]';
     const TAB_WIDTH = 4;
