@@ -47,6 +47,12 @@ class ElephantMarkdown
     protected $footnoteCounter = 1;
     protected $listLevel = 0;
 
+    public static function parse($text)
+    {
+        $md = new static;
+        return $md->transform($text);
+    }
+
     public function transform($text)
     {
         //Remove UTF-8 BOM and marker character in input, if present
