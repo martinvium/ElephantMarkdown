@@ -39,7 +39,7 @@ class Markdown
     protected $footnoteCounter = 1;
     protected $listLevel = 0;
 
-    public static function MD($text)
+    public static function parse($text)
     {
         $md = new static;
         return $md->transform($text);
