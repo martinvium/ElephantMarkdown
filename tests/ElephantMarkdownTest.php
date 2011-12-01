@@ -1,6 +1,6 @@
 <?php
 
-require_once dirname(__DIR__) . '/markdown.php';
+require_once dirname(__DIR__) . '/ElephantMarkdown.php';
 
 class ElephantMarkdownTest extends PHPUnit_Framework_TestCase
 {
