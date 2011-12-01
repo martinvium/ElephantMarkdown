@@ -1,5 +1,7 @@
 <?php
-class ElephantMarkdown
+namespace Elephant;
+
+class Markdown
 {
     const NESTED_BRACKETS_DEPTH = 6;
     const NESTED_URL_PARENTHESIS_DEPHT = 4;

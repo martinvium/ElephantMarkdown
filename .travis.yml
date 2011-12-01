@@ -4,4 +4,4 @@ php:
   - 5.3
   - 5.4
 
-script: phpunit tests/ElephantMarkdownTest.php
+script: phpunit tests/Elephant/MarkdownTest.php

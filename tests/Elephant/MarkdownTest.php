@@ -1,8 +1,9 @@
 <?php
+namespace Elephant;
 
-require_once dirname(__DIR__) . '/ElephantMarkdown.php';
+require_once dirname(dirname(__DIR__)) . '/src/Elephant/Markdown.php';
 
-class ElephantMarkdownTest extends PHPUnit_Framework_TestCase
+class MarkdownTest extends \PHPUnit_Framework_TestCase
 {
 
     public function testMixedHTML()
@@ -20,7 +21,7 @@ class ElephantMarkdownTest extends PHPUnit_Framework_TestCase
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 This is a regular paragraph.
 
@@ -37,10 +38,10 @@ MD
 
     public function testEscaping()
     {
-        $this->assertEquals("<p>http://images.google.com/images?num=30&amp;q=larry+bird</p>\n", ElephantMarkdown::parse("http://images.google.com/images?num=30&q=larry+bird"));
-        $this->assertEquals("<p>&copy;</p>\n", ElephantMarkdown::parse("&copy;"));
-        $this->assertEquals("<p>AT&amp;T</p>\n", ElephantMarkdown::parse("AT&T"));
-        $this->assertEquals("<p>4 &lt; 5</p>\n", ElephantMarkdown::parse("4 < 5"));
+        $this->assertEquals("<p>http://images.google.com/images?num=30&amp;q=larry+bird</p>\n", Markdown::parse("http://images.google.com/images?num=30&q=larry+bird"));
+        $this->assertEquals("<p>&copy;</p>\n", Markdown::parse("&copy;"));
+        $this->assertEquals("<p>AT&amp;T</p>\n", Markdown::parse("AT&T"));
+        $this->assertEquals("<p>4 &lt; 5</p>\n", Markdown::parse("4 < 5"));
     }
 
     public function testParagraphs()
@@ -52,7 +53,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 This is a paragraph
 
@@ -69,7 +70,7 @@ with a line break</p>
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 This is a paragraph  
 with a line break
@@ -80,7 +81,7 @@ MD
     public function testH1Setext()
     {
         $this->assertEquals("<h1>This is an H1</h1>\n",
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 This is an H1
 =============
@@ -91,7 +92,7 @@ MD
     public function testH2Setext()
     {
         $this->assertEquals("<h2>This is an H2</h2>\n",
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 This is an H2
 -------------
@@ -102,67 +103,67 @@ MD
     public function testH1Atx()
     {
         $this->assertEquals(
-            "<h1>This is an H1</h1>\n", ElephantMarkdown::parse("# This is an H1")
+            "<h1>This is an H1</h1>\n", Markdown::parse("# This is an H1")
         );
         $this->assertEquals(
-            "<h1>This is an H1</h1>\n", ElephantMarkdown::parse("# This is an H1#")
+            "<h1>This is an H1</h1>\n", Markdown::parse("# This is an H1#")
         );
     }
 
     public function testH2Atx()
     {
         $this->assertEquals(
-            "<h2>This is an H2</h2>\n", ElephantMarkdown::parse("## This is an H2")
+            "<h2>This is an H2</h2>\n", Markdown::parse("## This is an H2")
         );
         $this->assertEquals(
-            "<h2>This is an H2</h2>\n", ElephantMarkdown::parse("## This is an H2#")
+            "<h2>This is an H2</h2>\n", Markdown::parse("## This is an H2#")
         );
     }
 
     public function testH3Atx()
     {
         $this->assertEquals(
-            "<h3>This is an H3</h3>\n", ElephantMarkdown::parse("### This is an H3")
+            "<h3>This is an H3</h3>\n", Markdown::parse("### This is an H3")
         );
         $this->assertEquals(
-            "<h3>This is an H3</h3>\n", ElephantMarkdown::parse("### This is an H3#")
+            "<h3>This is an H3</h3>\n", Markdown::parse("### This is an H3#")
         );
     }
 
     public function testH4Atx()
     {
         $this->assertEquals(
-            "<h4>This is an H4</h4>\n", ElephantMarkdown::parse("#### This is an H4")
+            "<h4>This is an H4</h4>\n", Markdown::parse("#### This is an H4")
         );
         $this->assertEquals(
-            "<h4>This is an H4</h4>\n", ElephantMarkdown::parse("#### This is an H4#")
+            "<h4>This is an H4</h4>\n", Markdown::parse("#### This is an H4#")
         );
     }
 
     public function testH5Atx()
     {
         $this->assertEquals(
-            "<h5>This is an H5</h5>\n", ElephantMarkdown::parse("##### This is an H5")
+            "<h5>This is an H5</h5>\n", Markdown::parse("##### This is an H5")
         );
         $this->assertEquals(
-            "<h5>This is an H5</h5>\n", ElephantMarkdown::parse("##### This is an H5#")
+            "<h5>This is an H5</h5>\n", Markdown::parse("##### This is an H5#")
         );
     }
 
     public function testH6Atx()
     {
         $this->assertEquals(
-            "<h6>This is an H6</h6>\n", ElephantMarkdown::parse("###### This is an H6")
+            "<h6>This is an H6</h6>\n", Markdown::parse("###### This is an H6")
         );
         $this->assertEquals(
-            "<h6>This is an H6</h6>\n", ElephantMarkdown::parse("###### This is an H6#")
+            "<h6>This is an H6</h6>\n", Markdown::parse("###### This is an H6#")
         );
     }
 
     public function testHAtxCloseMismatch()
     {
         $this->assertEquals(
-            "<h6>Outro Teste</h6>\n", ElephantMarkdown::parse("###### Outro Teste ##")
+            "<h6>Outro Teste</h6>\n", Markdown::parse("###### Outro Teste ##")
         );
     }
 
@@ -180,7 +181,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 > This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 > consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
@@ -206,7 +207,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 > This is a blockquote with two paragraphs. Lorem ipsum dolor sit amet,
 consectetuer adipiscing elit. Aliquam hendrerit mi posuere lectus.
@@ -233,7 +234,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 > This is the first level of quoting.
 >
@@ -263,7 +264,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 > ## This is a header.
 > 
@@ -287,7 +288,7 @@ MD
 </ul>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 - Red
 - Blue
@@ -306,7 +307,7 @@ MD
 </ul>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 + Foo
 + Bar
@@ -325,7 +326,7 @@ MD
 </ul>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 * Foo
 * Bar
@@ -348,7 +349,7 @@ lorem ipsum etc</li>
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 *  Foo something, bar something
    lorem ipsum etc
@@ -371,7 +372,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 * Foo
     
@@ -399,7 +400,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 *   Foo
     
@@ -429,7 +430,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 *   Foo
     
@@ -457,7 +458,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 1. Foo
 2. Bar
@@ -474,7 +475,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 1990\. Nice Year
 1991\. Terrible Year.
@@ -493,7 +494,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 1. Foo
 8. Bar
@@ -518,7 +519,7 @@ MD
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
 1. Foo
 - *Foo bat*
@@ -539,7 +540,7 @@ Code
 
 HTML
             ,
-            ElephantMarkdown::parse(
+            Markdown::parse(
                 <<<MD
     Some
     Geeky <strong>HTML-escaped</strong>
@@ -554,7 +555,7 @@ MD
 <hr />
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 ***********
 MD
@@ -567,7 +568,7 @@ MD
 <hr />
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 - - - -
 MD
@@ -580,7 +581,7 @@ MD
 <hr />
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 * * * * 
 MD
@@ -595,7 +596,7 @@ MD
 <p><a href="http://example.net/">This link</a> has no title attribute.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example](http://example.com/ "Title") inline link.
 
@@ -610,7 +611,7 @@ MD
 <p>See my <a href="/about/">About</a> page for details.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 See my [About](/about/) page for details.
 MD
@@ -623,7 +624,7 @@ MD
 <p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example][id] reference-style link.
 
@@ -638,7 +639,7 @@ MD
 <p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example] [id] reference-style link.
 
@@ -653,7 +654,7 @@ MD
 <p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example] [id] reference-style link.
 
@@ -668,7 +669,7 @@ MD
 <p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example] [id] reference-style link.
 
@@ -683,7 +684,7 @@ MD
 <p>This is <a href="http://example.com/longish/path/to/resource/here" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example] [id] reference-style link.
     
@@ -699,7 +700,7 @@ MD
 <p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example] [ID] reference-style link.
 
@@ -714,7 +715,7 @@ MD
 <p>This is <a href="http://example.com/" title="Optional Title Here">an example</a> reference-style link.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 This is [an example][] reference-style link.
 
@@ -730,7 +731,7 @@ MD
 <a href="http://search.yahoo.com/" title="Yahoo Search">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search">MSN</a>.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 I get 10 times more traffic from [Google] [1] than from
 [Yahoo] [2] or [MSN] [3].
@@ -749,7 +750,7 @@ MD
 <a href="http://search.yahoo.com/" title="Yahoo Search">Yahoo</a> or <a href="http://search.msn.com/" title="MSN Search">MSN</a>.</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 I get 10 times more traffic from [Google][] than from
 [Yahoo][] or [MSN][].
@@ -767,7 +768,7 @@ MD
 <p><em>single asteriscs</em></p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 *single asteriscs*
 MD
@@ -780,7 +781,7 @@ MD
 <p><em>single underscores</em></p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 _single underscores_
 MD
@@ -793,7 +794,7 @@ MD
 <p><strong>double asteriscs</strong></p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 **double asteriscs**
 MD
@@ -806,7 +807,7 @@ MD
 <p><strong>double underscores</strong></p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 __double underscores__
 MD
@@ -819,7 +820,7 @@ MD
 <p>un<em>frigging</em>believable</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 un*frigging*believable
 MD
@@ -832,7 +833,7 @@ MD
 <p>un_frigging_believable</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 un_frigging_believable
 MD
@@ -845,7 +846,7 @@ MD
 <p>un<strong>frigging</strong>believable</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 un**frigging**believable
 MD
@@ -858,7 +859,7 @@ MD
 <p>un__frigging__believable</p>
 
 HTML
-            , ElephantMarkdown::parse(
+            , Markdown::parse(
                 <<<MD
 un__frigging__believable
 MD
