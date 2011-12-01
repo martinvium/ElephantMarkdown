@@ -46,6 +46,12 @@ class Markdown
         return $md->transform($text);
     }
 
+    /**
+     * Transform markdown source into HTML.
+     *
+     * @param string $text raw markdown markup
+     * @return string transformed html
+     */
     public function transform($text)
     {
         //Remove UTF-8 BOM and marker character in input, if present
